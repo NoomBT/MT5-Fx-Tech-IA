@@ -37,7 +37,7 @@
 
     <div class="container mx-auto px-4 py-8 max-w-7xl">
         <!-- Dashboard Stats -->
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
             <div class="glass-panel rounded-xl p-6 shadow-xl flex items-center justify-between">
                 <div>
                     <p class="text-gray-400 text-sm font-semibold uppercase tracking-wider mb-1">Balance</p>
@@ -63,6 +63,16 @@
                 </div>
                 <div class="h-12 w-12 rounded-full bg-green-500/20 flex items-center justify-center border border-green-500/30">
                     <i class="fas fa-chart-line text-green-400 text-xl"></i>
+                </div>
+            </div>
+            <div class="glass-panel rounded-xl p-6 shadow-xl flex items-center justify-between">
+                <div>
+                    <p class="text-gray-400 text-sm font-semibold uppercase tracking-wider mb-1">🤖 AI Signal</p>
+                    <h2 class="text-2xl font-bold text-yellow-400" id="ai-signal">--</h2>
+                    <p class="text-xs text-gray-500" id="ai-symbol">XAUUSDm H1</p>
+                </div>
+                <div class="h-12 w-12 rounded-full bg-yellow-500/20 flex items-center justify-center border border-yellow-500/30">
+                    <i class="fas fa-brain text-yellow-400 text-xl"></i>
                 </div>
             </div>
         </div>
@@ -172,9 +182,9 @@
                         <select id="inp-timeframe" class="w-full bg-gray-800 border border-gray-600 rounded-lg px-4 py-2 text-white focus:outline-none focus:border-blue-500 transition">
                             <option value="M1">M1 (1 นาที)</option>
                             <option value="M5" >M5 (5 นาที)</option>
-                            <option value="M15" selected>M15 (15 นาที)</option>
+                            <option value="M15">M15 (15 นาที)</option>
                             <option value="M30">M30 (30 นาที)</option>
-                            <option value="H1">H1 (1 ชั่วโมง)</option>
+                            <option value="H1" selected>H1 (1 ชั่วโมง) ⭐</option>
                             <option value="H4">H4 (4 ชั่วโมง)</option>
                             <option value="D1">D1 (1 วัน)</option>
                         </select>
@@ -182,11 +192,11 @@
                     <div class="grid grid-cols-2 gap-4">
                         <div>
                             <label class="block text-sm font-medium text-gray-400 mb-1">Stop Loss (Points)</label>
-                            <input type="number" id="inp-sl" value="200" class="w-full bg-gray-800 border border-gray-600 rounded-lg px-4 py-2 text-white focus:outline-none focus:border-blue-500 transition">
+                            <input type="number" id="inp-sl" value="150" class="w-full bg-gray-800 border border-gray-600 rounded-lg px-4 py-2 text-white focus:outline-none focus:border-blue-500 transition">
                         </div>
                         <div>
                             <label class="block text-sm font-medium text-gray-400 mb-1">Take Profit (Points)</label>
-                            <input type="number" id="inp-tp" value="200" class="w-full bg-gray-800 border border-gray-600 rounded-lg px-4 py-2 text-white focus:outline-none focus:border-blue-500 transition">
+                            <input type="number" id="inp-tp" value="300" class="w-full bg-gray-800 border border-gray-600 rounded-lg px-4 py-2 text-white focus:outline-none focus:border-blue-500 transition">
                         </div>
                     </div>
                     <div class="grid grid-cols-2 gap-4">
@@ -415,6 +425,21 @@
                         profitContainer.className = "text-3xl font-bold text-red-400";
                     } else {
                         profitContainer.className = "text-3xl font-bold text-white";
+                    }
+
+                    // อัปเดต AI Signal
+                    if (data.ai_signal) {
+                        const aiSignalEl = document.getElementById('ai-signal');
+                        const aiSymbolEl = document.getElementById('ai-symbol');
+                        aiSignalEl.innerText = data.ai_signal;
+                        if (data.ai_signal === 'BUY') {
+                            aiSignalEl.className = 'text-2xl font-bold text-blue-400';
+                        } else if (data.ai_signal === 'SELL') {
+                            aiSignalEl.className = 'text-2xl font-bold text-red-400';
+                        } else {
+                            aiSignalEl.className = 'text-2xl font-bold text-gray-400';
+                        }
+                        aiSymbolEl.innerText = data.ai_symbol || 'XAUUSDm H1';
                     }
                 }
 

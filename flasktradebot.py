@@ -44,7 +44,7 @@ bot_status = {
     "use_bb_ma_macd": False,  # ใช้ BB+MA+MACD Strategy
     "ai_model_path": "ml_model.pkl",
     "use_gpu_model": False,     # ใช้ GPU Model (ml_model_gpu.pkl)
-    "timeframe": mt5.TIMEFRAME_M15,
+    "timeframe": mt5.TIMEFRAME_H1,
     "use_trend_filter": True,
     "trend_timeframe": mt5.TIMEFRAME_H1,
     
@@ -85,7 +85,7 @@ TIMEFRAME_MAP = {
 
 
 def get_timeframe(tf_str):
-    return TIMEFRAME_MAP.get(tf_str, mt5.TIMEFRAME_M15)
+    return TIMEFRAME_MAP.get(tf_str, mt5.TIMEFRAME_H1)
 
 
 # Log file handler
@@ -340,7 +340,7 @@ def get_ai_signal(symbol, timeframe=None):
     global ml_model
     
     if timeframe is None:
-        timeframe = bot_status.get("timeframe", mt5.TIMEFRAME_M5)
+        timeframe = bot_status.get("timeframe", mt5.TIMEFRAME_H1)
     
     if ml_model is None:
         if not load_ml_model():
@@ -1010,6 +1010,8 @@ def auto_trading_loop():
             
             if bot_status.get("use_ai", False):
                 ai_signal = get_ai_signal(symbol)
+                bot_status["last_ai_signal"] = ai_signal
+                bot_status["ai_symbol"] = symbol
                 add_log(f"🤖 {symbol} AI Signal: {ai_signal}")
                 
                 max_per_side = bot_status.get("max_per_side", 1)
@@ -1196,6 +1198,8 @@ def get_status():
         "profit": round(account_info.profit, 2),
         "positions": pos_list,
         "logs": logs,
+        "ai_signal": bot_status.get("last_ai_signal", "NEUTRAL"),
+        "ai_symbol": bot_status.get("ai_symbol", "XAUUSDm"),
         "settings": {
             "use_ai": bot_status.get("use_ai", False),
             "use_gpu_model": bot_status.get("use_gpu_model", False),
