@@ -27,7 +27,7 @@ class MLTradingModel:
         # 3-Class Classification: 1=Buy, 0=Neutral, -1=Sell
         self.forward_window = 5
         self.threshold = 0.002
-        self.prob_threshold = 0.30
+        self.prob_threshold = 0.25  # ลดลงเพื่อให้ predict Buy/Sell บ่อยขึ้น
 
     def create_features(self, df):
         """สร้าง Features เชิงลึก (EMA/MACD/RSI Strategy: Fast=12, Slow=26)"""
@@ -238,6 +238,12 @@ class MLTradingModel:
         
         base_model = GradientBoostingClassifier(random_state=42)
         
+        # ใช้ class weights เพื่อให้ model predict Buy/Sell มากขึ้น
+        # ปรับ weight เป็น {-1: 2.5, 0: 1, 1: 2.5}
+        class_weights = {-1: 2.5, 0: 1, 1: 2.5}
+        from sklearn.utils.class_weight import compute_sample_weight
+        sample_weights = compute_sample_weight(class_weights, y_train)
+        
         random_search = RandomizedSearchCV(
             base_model,
             param_distributions=param_dist,
@@ -445,16 +451,16 @@ if __name__ == '__main__':
     print(f"📊 กำลังฝึกโมเดลสำหรับ {symbol}")
     print("="*60)
     
-    ml.train(symbol, mt5.TIMEFRAME_M5, num_bars=3000)
+    ml.train(symbol, mt5.TIMEFRAME_M15, num_bars=3000)
     
     print("\n📈 Feature Importance:")
     ml.get_feature_importance()
     
     print("\n🔮 ทดสอบการทำนาย:")
-    signal = ml.predict(symbol, mt5.TIMEFRAME_M5)
+    signal = ml.predict(symbol, mt5.TIMEFRAME_M15)
     print(f"   Signal: {signal}")
     
     print("\n🎮 Running Simulation...")
-    ml.simulate(symbol, mt5.TIMEFRAME_M5, num_bars=2000)
+    ml.simulate(symbol, mt5.TIMEFRAME_M15, num_bars=2000)
     
     mt5.shutdown()

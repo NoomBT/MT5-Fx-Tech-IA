@@ -75,7 +75,7 @@
                     <div class="space-y-4">
                     <div>
                         <label class="block text-sm font-medium text-gray-400 mb-1">คู่เงิน (คั่นด้วยลูกน้ำ)</label>
-                        <input type="text" id="inp-symbols" value="XAUUSDm, EURUSDm, GBPUSDm, USDJPYm, AUDUSDm, EURJPYm,USDCHFm,USDCADm" class="w-full bg-gray-800 border border-gray-600 rounded-lg px-4 py-2 text-white focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition">
+                        <input type="text" id="inp-symbols" value="BTCUSDm,XAUUSDm,EURUSDm,GBPUSDm,USDJPYm,AUDUSDm,EURJPYm,USDCHFm,USDCADm" class="w-full bg-gray-800 border border-gray-600 rounded-lg px-4 py-2 text-white focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition">
                     </div>
                     
                     <!-- 💰 Money Management -->
@@ -446,13 +446,7 @@ tbody.appendChild(tr);
                     tbody.innerHTML = '<tr><td colspan="9" class="p-3 text-center text-gray-500">ไม่มีออเดอร์ที่เปิดอยู่</td></tr>';
                 }
                 
-                // อัปเดต Checkboxes จาก Settings
-                if (data.settings) {
-                    document.getElementById('inp-use-ai').checked = data.settings.use_ai !== false;
-                    document.getElementById('inp-use-gpu').checked = data.settings.use_gpu_model === true;
-                    document.getElementById('inp-use-bb-ma-macd').checked = data.settings.use_bb_ma_macd === true;
-                    document.getElementById('inp-ai-model').value = data.settings.ai_model_path || 'ml_model.pkl';
-                }
+
                 
                 // อัปเดต Logs
                 const logContainer = document.getElementById('log-container');

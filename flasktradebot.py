@@ -917,7 +917,7 @@ def check_and_close_positions():
         
         # ปิดเมื่อ Signal เปลี่ยนเทรน (แต่ต้องไม่ขาดทุน)
         if not should_close and profit > 0:
-            if bot_status.get("use_ai", True):
+            if bot_status.get("use_ai", False):
                 signal = get_ai_signal(pos.symbol)
             else:
                 # ใช้ EMA + MACD + RSI
@@ -1004,11 +1004,11 @@ def auto_trading_loop():
             actions_to_open = []
             
             # ตรวจสอบแนวโน้มใหญ่ (EMA 200 ใน timeframe ที่ใหญ่กว่า)
-            if bot_status.get("use_trend_filter", True):
+            if bot_status.get("use_trend_filter", False):
                 trend_signal, trend_desc = get_trend_ema200(symbol, bot_status.get("trend_timeframe", mt5.TIMEFRAME_H1))
                 add_log(f"📈 {symbol} Trend: {trend_signal} {trend_desc}")
             
-            if bot_status.get("use_ai", True):
+            if bot_status.get("use_ai", False):
                 ai_signal = get_ai_signal(symbol)
                 add_log(f"🤖 {symbol} AI Signal: {ai_signal}")
                 
@@ -1073,7 +1073,7 @@ def auto_trading_loop():
                         max_per_side = 1
                     
                     # ถ้าใช้ trend filter ต้องตรงกับแนวโน้มด้วย
-                    if bot_status.get("use_trend_filter", True):
+                    if bot_status.get("use_trend_filter", False):
                         if trend_signal == "BULLISH" and is_bullish and buy_count < max_per_side:
                             actions_to_open.append('buy')
                         elif trend_signal == "BEARISH" and is_bearish and sell_count < max_per_side:
@@ -1197,7 +1197,7 @@ def get_status():
         "positions": pos_list,
         "logs": logs,
         "settings": {
-            "use_ai": bot_status.get("use_ai", True),
+            "use_ai": bot_status.get("use_ai", False),
             "use_gpu_model": bot_status.get("use_gpu_model", False),
             "use_bb_ma_macd": bot_status.get("use_bb_ma_macd", False),
             "ai_model_path": bot_status.get("ai_model_path", "ml_model.pkl")
@@ -1239,21 +1239,21 @@ def control_bot():
             bot_status["close_all_dollar"] = float(data.get('close_all_dollar', 0))
             bot_status["close_all_pullback"] = float(data.get('close_all_pullback', 0))
             
-            bot_status["use_sl_tp"] = data.get('use_sl_tp', True)
-            bot_status["close_profit"] = float(data.get('close_profit', 10))
-            bot_status["close_loss"] = float(data.get('close_loss', 20))
-            bot_status["use_ai"] = data.get('use_ai', True)
-            bot_status["use_bb_ma_macd"] = data.get('use_bb_ma_macd', False)
-            bot_status["ai_model_path"] = data.get('ai_model_path', 'ml_model.pkl')
-            bot_status["use_gpu_model"] = data.get('use_gpu_model', False)
+            bot_status["use_sl_tp"] = data.get('use_sl_tp', bot_status.get("use_sl_tp", True))
+            bot_status["close_profit"] = float(data.get('close_profit', bot_status.get("close_profit", 10)))
+            bot_status["close_loss"] = float(data.get('close_loss', bot_status.get("close_loss", 20)))
+            bot_status["use_ai"] = data.get('use_ai', bot_status.get("use_ai", True))
+            bot_status["use_bb_ma_macd"] = data.get('use_bb_ma_macd', bot_status.get("use_bb_ma_macd", False))
+            bot_status["ai_model_path"] = data.get('ai_model_path', bot_status.get("ai_model_path", 'ml_model.pkl'))
+            bot_status["use_gpu_model"] = data.get('use_gpu_model', bot_status.get("use_gpu_model", False))
             
-            tf_str = data.get('timeframe', 'M5')
+            tf_str = data.get('timeframe', bot_status.get("timeframe_str", 'M15'))
             bot_status["timeframe"] = get_timeframe(tf_str)
             bot_status["timeframe_str"] = tf_str
             
             # Trend filter settings
-            bot_status["use_trend_filter"] = data.get('use_trend_filter', True)
-            trend_tf = data.get('trend_timeframe', 'H1')
+            bot_status["use_trend_filter"] = data.get('use_trend_filter', bot_status.get("use_trend_filter", True))
+            trend_tf = data.get('trend_timeframe', bot_status.get("trend_timeframe", 'H1'))
             bot_status["trend_timeframe"] = get_timeframe(trend_tf)
             
             # 💰 Reset consecutive losses when starting
