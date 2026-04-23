@@ -44,7 +44,7 @@ bot_status = {
     "use_bb_ma_macd": False,  # ใช้ BB+MA+MACD Strategy
     "ai_model_path": "ml_model.pkl",
     "use_gpu_model": False,     # ใช้ GPU Model (ml_model_gpu.pkl)
-    "timeframe": mt5.TIMEFRAME_M5,
+    "timeframe": mt5.TIMEFRAME_M15,
     "use_trend_filter": True,
     "trend_timeframe": mt5.TIMEFRAME_H1,
     
@@ -85,7 +85,7 @@ TIMEFRAME_MAP = {
 
 
 def get_timeframe(tf_str):
-    return TIMEFRAME_MAP.get(tf_str, mt5.TIMEFRAME_M5)
+    return TIMEFRAME_MAP.get(tf_str, mt5.TIMEFRAME_M15)
 
 
 # Log file handler
@@ -755,6 +755,13 @@ def open_trade(symbol, action, lot, sl_points, tp_points):
        }
     
     result = mt5.order_send(request)
+
+    # 1. เช็คว่า result เป็น None หรือไม่
+    if result is None:
+        error_code = mt5.last_error()
+        add_log(f"❌ ระบบขัดข้อง (Critical Error): ไม่สามารถส่งคำสั่งได้, Error code: {error_code}")
+        return  # ออกจากฟังก์ชันเพื่อไม่ให้เกิด AttributeError
+
     if result.retcode != mt5.TRADE_RETCODE_DONE:
         add_log(f"❌ ส่งคำสั่ง {action.upper()} {symbol} ล้มเหลว: {result.comment} (retcode: {result.retcode})")
     else:
