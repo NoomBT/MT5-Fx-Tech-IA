@@ -1,0 +1,477 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MT5 Auto Trading Bot</title>
+    <!-- ใช้ Tailwind CSS สำหรับความสวยงาม -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+        .glass-panel {
+            background: rgba(30, 41, 59, 0.7);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-track { background: #1e293b; }
+        ::-webkit-scrollbar-thumb { background: #475569; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: #64748b; }
+    </style>
+</head>
+<body class="bg-gray-900 text-gray-100 min-h-screen">
+
+    <!-- Navbar -->
+    <nav class="bg-gray-800 border-b border-gray-700 py-4 px-6 shadow-lg flex justify-between items-center">
+        <div class="flex items-center space-x-3">
+            <i class="fas fa-robot text-blue-500 text-2xl"></i>
+            <h1 class="text-xl font-bold tracking-wider text-white">PYTHON <span class="text-blue-500">MT5 BOT</span></h1>
+        </div>
+        <div class="flex items-center space-x-2">
+            <span id="conn-indicator" class="h-3 w-3 rounded-full bg-red-500 shadow-[0_0_8px_rgba(239,68,68,0.8)]"></span>
+            <span id="conn-text" class="text-sm text-gray-400 font-medium">ไม่ได้เชื่อมต่อ MT5</span>
+        </div>
+    </nav>
+
+    <div class="container mx-auto px-4 py-8 max-w-7xl">
+        <!-- Dashboard Stats -->
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+            <div class="glass-panel rounded-xl p-6 shadow-xl flex items-center justify-between">
+                <div>
+                    <p class="text-gray-400 text-sm font-semibold uppercase tracking-wider mb-1">Balance</p>
+                    <h2 class="text-3xl font-bold text-white"><span class="text-gray-500 text-lg">$</span><span id="stat-balance">0.00</span></h2>
+                </div>
+                <div class="h-12 w-12 rounded-full bg-blue-500/20 flex items-center justify-center border border-blue-500/30">
+                    <i class="fas fa-wallet text-blue-400 text-xl"></i>
+                </div>
+            </div>
+            <div class="glass-panel rounded-xl p-6 shadow-xl flex items-center justify-between">
+                <div>
+                    <p class="text-gray-400 text-sm font-semibold uppercase tracking-wider mb-1">Equity</p>
+                    <h2 class="text-3xl font-bold text-white"><span class="text-gray-500 text-lg">$</span><span id="stat-equity">0.00</span></h2>
+                </div>
+                <div class="h-12 w-12 rounded-full bg-purple-500/20 flex items-center justify-center border border-purple-500/30">
+                    <i class="fas fa-chart-pie text-purple-400 text-xl"></i>
+                </div>
+            </div>
+            <div class="glass-panel rounded-xl p-6 shadow-xl flex items-center justify-between">
+                <div>
+                    <p class="text-gray-400 text-sm font-semibold uppercase tracking-wider mb-1">Floating Profit</p>
+                    <h2 class="text-3xl font-bold" id="stat-profit-container"><span class="text-gray-500 text-lg">$</span><span id="stat-profit">0.00</span></h2>
+                </div>
+                <div class="h-12 w-12 rounded-full bg-green-500/20 flex items-center justify-center border border-green-500/30">
+                    <i class="fas fa-chart-line text-green-400 text-xl"></i>
+                </div>
+            </div>
+        </div>
+
+        <!-- Control Panel & Logs -->
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+            <!-- Settings Form -->
+            <div class="glass-panel rounded-xl p-4 shadow-xl">
+                <h3 class="text-md font-bold text-white mb-3 border-b border-gray-700 pb-2"><i class="fas fa-cogs mr-2 text-gray-400"></i> ตั้งค่าการเทรด</h3>
+                    <div class="space-y-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-400 mb-1">คู่เงิน (คั่นด้วยลูกน้ำ)</label>
+                        <input type="text" id="inp-symbols" value="XAUUSDm, EURUSDm, GBPUSDm, USDJPYm, AUDUSDm, EURJPYm,USDCHFm,USDCADm" class="w-full bg-gray-800 border border-gray-600 rounded-lg px-4 py-2 text-white focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition">
+                    </div>
+                    
+                    <!-- 💰 Money Management -->
+                    <div class="border-t border-gray-700 pt-4 mt-4">
+                        <h4 class="text-sm font-bold text-yellow-400 mb-3"><i class="fas fa-coins mr-2"></i>💰 ระบบบริหารเงิน</h4>
+                        <div class="grid grid-cols-2 gap-3">
+                            <div>
+                                <label class="block text-xs font-medium text-gray-500 mb-1">Initial Lot</label>
+                                <input type="number" id="inp-initial-lot" value="0.01" step="0.01" class="w-full bg-gray-800 border border-gray-600 rounded px-2 py-1 text-white text-sm">
+                            </div>
+                            <div>
+                                <label class="block text-xs font-medium text-gray-500 mb-1">Max Lot</label>
+                                <input type="number" id="inp-max-lot" value="1.0" step="0.1" class="w-full bg-gray-800 border border-gray-600 rounded px-2 py-1 text-white text-sm">
+                            </div>
+                            <div>
+                                <label class="block text-xs font-medium text-gray-500 mb-1">Martingale x</label>
+                                <input type="number" id="inp-martingale" value="1.5" step="0.1" class="w-full bg-gray-800 border border-gray-600 rounded px-2 py-1 text-white text-sm">
+                            </div>
+                            <div>
+                                <label class="block text-xs font-medium text-gray-500 mb-1">Max Risk %</label>
+                                <input type="number" id="inp-max-risk" value="10" step="1" class="w-full bg-gray-800 border border-gray-600 rounded px-2 py-1 text-white text-sm">
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Grid Trading -->
+                    <div class="border-t border-gray-700 pt-3 mt-3">
+                        <div class="flex items-center mb-2">
+                            <input type="checkbox" id="inp-use-grid" class="w-4 h-4">
+                            <label class="ml-2 text-sm text-yellow-400">ใช้ Grid Trading</label>
+                        </div>
+                        <div class="grid grid-cols-2 gap-2">
+                            <div>
+                                <label class="text-xs text-gray-500">Distance (pts)</label>
+                                <input type="number" id="inp-grid-dist" value="300" class="w-full bg-gray-800 rounded px-2 py-1 text-white text-sm">
+                            </div>
+                            <div>
+                                <label class="text-xs text-gray-500">Max Grids</label>
+                                <input type="number" id="inp-max-grid" value="10" class="w-full bg-gray-800 rounded px-2 py-1 text-white text-sm">
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- 📌 TP/SL -->
+                    <div class="border-t border-gray-700 pt-3 mt-3">
+                        <h4 class="text-sm font-bold text-blue-400 mb-2">📌 TP / SL</h4>
+                        <div class="grid grid-cols-2 gap-2">
+                            <div>
+                                <label class="text-xs text-gray-500">SL (pts)</label>
+                                <input type="number" id="inp-sl" value="0" class="w-full bg-gray-800 rounded px-2 py-1 text-white text-sm">
+                            </div>
+                            <div>
+                                <label class="text-xs text-gray-500">TP (pts)</label>
+                                <input type="number" id="inp-tp" value="0" class="w-full bg-gray-800 rounded px-2 py-1 text-white text-sm">
+                            </div>
+                        </div>
+                        <div class="flex items-center mt-2">
+                            <input type="checkbox" id="inp-use-trailing" class="w-4 h-4">
+                            <label class="ml-2 text-xs text-gray-400">Trailing Stop</label>
+                        </div>
+                        <div class="grid grid-cols-2 gap-2 mt-1">
+                            <div>
+                                <label class="text-xs text-gray-500">Trail Dist</label>
+                                <input type="number" id="inp-trailing-dist" value="0" class="w-full bg-gray-800 rounded px-2 py-1 text-white text-sm">
+                            </div>
+                            <div>
+                                <label class="text-xs text-gray-500">Step</label>
+                                <input type="number" id="inp-trailing-step" value="10" class="w-full bg-gray-800 rounded px-2 py-1 text-white text-sm">
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- 💎 Close All Profit -->
+                    <div class="border-t border-gray-700 pt-3 mt-3">
+                        <h4 class="text-sm font-bold text-green-400 mb-2">💎 Close All Profit</h4>
+                        <div class="grid grid-cols-3 gap-2">
+                            <div>
+                                <label class="text-xs text-gray-500">% Balance</label>
+                                <input type="number" id="inp-close-all-percent" value="0.1" step="0.1" class="w-full bg-gray-800 rounded px-2 py-1 text-white text-sm">
+                            </div>
+                            <div>
+                                <label class="text-xs text-gray-500">$ Dollar</label>
+                                <input type="number" id="inp-close-all-dollar" value="0" class="w-full bg-gray-800 rounded px-2 py-1 text-white text-sm">
+                            </div>
+                            <div>
+                                <label class="text-xs text-gray-500">% Pullback</label>
+                                <input type="number" id="inp-close-all-pullback" value="0" class="w-full bg-gray-800 rounded px-2 py-1 text-white text-sm">
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div>
+                        <label class="block text-sm font-medium text-gray-400 mb-1">Time Frame</label>
+                        <select id="inp-timeframe" class="w-full bg-gray-800 border border-gray-600 rounded-lg px-4 py-2 text-white focus:outline-none focus:border-blue-500 transition">
+                            <option value="M1">M1 (1 นาที)</option>
+                            <option value="M5" selected>M5 (5 นาที)</option>
+                            <option value="M15">M15 (15 นาที)</option>
+                            <option value="M30">M30 (30 นาที)</option>
+                            <option value="H1">H1 (1 ชั่วโมง)</option>
+                            <option value="H4">H4 (4 ชั่วโมง)</option>
+                            <option value="D1">D1 (1 วัน)</option>
+                        </select>
+                    </div>
+                    <div class="grid grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-400 mb-1">Stop Loss (Points)</label>
+                            <input type="number" id="inp-sl" value="200" class="w-full bg-gray-800 border border-gray-600 rounded-lg px-4 py-2 text-white focus:outline-none focus:border-blue-500 transition">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-400 mb-1">Take Profit (Points)</label>
+                            <input type="number" id="inp-tp" value="200" class="w-full bg-gray-800 border border-gray-600 rounded-lg px-4 py-2 text-white focus:outline-none focus:border-blue-500 transition">
+                        </div>
+                    </div>
+                    <div class="grid grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-400 mb-1">ปิดเมื่อได้กำไร ($)</label>
+                            <input type="number" id="inp-close-profit" value="100" class="w-full bg-gray-800 border border-gray-600 rounded-lg px-4 py-2 text-white focus:outline-none focus:border-blue-500 transition">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-400 mb-1">ปิดเมื่อขาดทุน ($)</label>
+                            <input type="number" id="inp-close-loss" value="100" class="w-full bg-gray-800 border border-gray-600 rounded-lg px-4 py-2 text-white focus:outline-none focus:border-blue-500 transition">
+                        </div>
+                    </div>
+                    <div class="flex items-center mt-4">
+                        <input type="checkbox" id="inp-use-sl-tp" checked class="w-5 h-5 bg-gray-800 border border-gray-600 rounded text-blue-500 focus:ring-blue-500">
+                        <label for="inp-use-sl-tp" class="ml-2 text-sm font-medium text-gray-300">ใช้ SL/TP (ถ้าไม่เช็คจะปิดออเดอร์เมื่อถึงเงื่อนไข)</label>
+                    </div>
+
+                    <!-- Trend Filter Settings -->
+                    <div class="border-t border-gray-700 pt-4 mt-4">
+                        <div class="flex items-center mb-3">
+                            <input type="checkbox" id="inp-use-trend-filter" checked class="w-5 h-5 bg-gray-800 border border-gray-600 rounded text-blue-500 focus:ring-blue-500">
+                            <label for="inp-use-trend-filter" class="ml-2 text-sm font-medium text-gray-300">ใช้ Trend Filter (EMA 200)</label>
+                        </div>
+                        <div>
+                            <label class="block text-xs font-medium text-gray-500 mb-1">Trend Timeframe</label>
+                            <select id="inp-trend-timeframe" class="w-full bg-gray-800 border border-gray-600 rounded px-2 py-1 text-white text-sm">
+                                <option value="H1" selected>H1 (1 ชั่วโมง)</option>
+                                <option value="H4">H4 (4 ชั่วโมง)</option>
+                                <option value="D1">D1 (1 วัน)</option>
+                            </select>
+                        </div>
+                        <p class="text-xs text-gray-500 mt-2">ซื้อตามแนวโน้มขาขึ้น ขายตามแนวโน้มขาลง</p>
+                    </div>
+
+                    <!-- AI Model Settings -->
+                    <div class="border-t border-gray-700 pt-4 mt-4">
+                        <div class="flex items-center mb-3">
+                            <input type="checkbox" id="inp-use-ai" checked class="w-5 h-5 bg-gray-800 border border-gray-600 rounded text-blue-500 focus:ring-blue-500">
+                            <label for="inp-use-ai" class="ml-2 text-sm font-medium text-gray-300">ใช้ AI (Random Forest)</label>
+                        </div>
+                        <div class="grid grid-cols-2 gap-2">
+                            <div>
+                                <input type="checkbox" id="inp-use-gpu" class="w-4 h-4 bg-gray-800 border border-gray-600 rounded text-purple-500 focus:ring-purple-500">
+                                <label for="inp-use-gpu" class="text-xs text-gray-400">GPU Model</label>
+                            </div>
+                            <div>
+                                <input type="checkbox" id="inp-use-bb-ma-macd" class="w-4 h-4 bg-gray-800 border border-gray-600 rounded text-green-500 focus:ring-green-500">
+                                <label for="inp-use-bb-ma-macd" class="text-xs text-gray-400">BB+MA+MACD</label>
+                            </div>
+                        </div>
+                        <div class="mt-2">
+                            <label class="block text-xs font-medium text-gray-500 mb-1">Model Path</label>
+                            <input type="text" id="inp-ai-model" value="ml_model.pkl" class="w-full bg-gray-800 border border-gray-600 rounded px-2 py-1 text-white text-sm">
+                        </div>
+                    </div>
+
+                    <div class="pt-4 flex space-x-3">
+                        <button id="btn-start" onclick="toggleBot('start')" class="flex-1 bg-gradient-to-r from-blue-600 to-blue-500 hover:from-blue-500 hover:to-blue-400 text-white font-bold py-3 px-4 rounded-lg shadow-lg transform transition hover:-translate-y-0.5 flex items-center justify-center">
+                            <i class="fas fa-play mr-2"></i> start
+                        </button>
+                        <button id="btn-stop" onclick="toggleBot('stop')" disabled class="flex-1 bg-gray-700 text-gray-400 font-bold py-3 px-4 rounded-lg cursor-not-allowed flex items-center justify-center transition">
+                            <i class="fas fa-stop mr-2"></i> stop
+                        </button>
+                        <button id="btn-close-all" onclick="toggleBot('close_all')" class="flex-1 bg-red-600 hover:bg-red-500 text-white font-bold py-3 px-4 rounded-lg shadow-lg flex items-center justify-center">
+                            <i class="fas fa-times-circle mr-2"></i> closeall
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Terminal Logs -->
+            <div class="glass-panel rounded-xl p-4 shadow-xl flex flex-col">
+                <h3 class="text-md font-bold text-white mb-3 border-b border-gray-700 pb-2"><i class="fas fa-terminal mr-2 text-gray-400"></i> บันทึกระบบ (Logs)</h3>
+                <div id="log-container" class="flex-1 bg-black/50 rounded-lg p-3 font-mono text-xs overflow-y-auto h-48 border border-gray-700">
+                    <p class="text-gray-500">รอการทำงาน...</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Active Positions Table -->
+        <div class="glass-panel rounded-xl p-4 shadow-xl">
+            <h3 class="text-md font-bold text-white mb-3 border-b border-gray-700 pb-2"><i class="fas fa-list mr-2 text-gray-400"></i> ออเดอร์ที่เปิดอยู่ (Active Positions)</h3>
+            <div class="overflow-x-auto">
+                <table class="w-full text-left border-collapse text-xs">
+                    <thead>
+                        <tr class="bg-gray-800 text-gray-400 uppercase tracking-wider">
+                            <th class="p-2 rounded-tl-lg">Ticket</th>
+                            <th class="p-2">Symbol</th>
+                            <th class="p-2">Type</th>
+                            <th class="p-2">Volume</th>
+                            <th class="p-2">Open</th>
+                            <th class="p-2">Current</th>
+                            <th class="p-2">S/L</th>
+                            <th class="p-2">T/P</th>
+                            <th class="p-2 text-right rounded-tr-lg">Profit</th>
+                        </tr>
+                    </thead>
+                    <tbody id="positions-body" class="divide-y divide-gray-800">
+                        <!-- Positions will be injected here -->
+                        <tr><td colspan="9" class="p-4 text-center text-gray-500">ไม่มีออเดอร์ที่เปิดอยู่</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- JavaScript for API Polling and UI Update -->
+    <script>
+        let isRunning = false;
+
+        // ฟังก์ชันสั่งเปิด/ปิดบอท
+        async function toggleBot(action) {
+            const data = {
+                action: action,
+                symbols: document.getElementById('inp-symbols').value,
+                
+                // 💰 Money Management
+                initial_lot: document.getElementById('inp-initial-lot').value,
+                max_lot: document.getElementById('inp-max-lot').value,
+                martingale_mult: document.getElementById('inp-martingale').value,
+                max_risk_percent: document.getElementById('inp-max-risk').value,
+                
+                // 📊 Grid Trading
+                use_grid: document.getElementById('inp-use-grid').checked,
+                grid_distance: document.getElementById('inp-grid-dist').value,
+                max_grid_orders: document.getElementById('inp-max-grid').value,
+                
+                // 📌 TP/SL
+                sl_points: document.getElementById('inp-sl').value,
+                tp_points: document.getElementById('inp-tp').value,
+                use_trailing: document.getElementById('inp-use-trailing').checked,
+                trailing_distance: document.getElementById('inp-trailing-dist').value,
+                trailing_step: document.getElementById('inp-trailing-step').value,
+                
+                // 💎 Close All Profit
+                close_all_percent: document.getElementById('inp-close-all-percent').value,
+                close_all_dollar: document.getElementById('inp-close-all-dollar').value,
+                close_all_pullback: document.getElementById('inp-close-all-pullback').value,
+                
+                close_profit: document.getElementById('inp-close-profit').value,
+                close_loss: document.getElementById('inp-close-loss').value,
+                use_sl_tp: document.getElementById('inp-use-sl-tp').checked,
+                use_ai: document.getElementById('inp-use-ai').checked,
+                use_gpu_model: document.getElementById('inp-use-gpu').checked,
+                use_bb_ma_macd: document.getElementById('inp-use-bb-ma-macd').checked,
+                ai_model_path: document.getElementById('inp-ai-model').value,
+                timeframe: document.getElementById('inp-timeframe').value,
+                use_trend_filter: document.getElementById('inp-use-trend-filter').checked,
+                trend_timeframe: document.getElementById('inp-trend-timeframe').value
+            };
+
+            try {
+                const response = await fetch('/api/control', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(data)
+                });
+                const result = await response.json();
+
+                // อัปเดต UI ทันที
+                if(action === 'start') {
+                    document.getElementById('btn-start').disabled = true;
+                    document.getElementById('btn-start').classList.replace('from-blue-600', 'bg-gray-700');
+                    document.getElementById('btn-start').classList.add('cursor-not-allowed', 'text-gray-400');
+
+                    document.getElementById('btn-stop').disabled = false;
+                    document.getElementById('btn-stop').classList.replace('bg-gray-700', 'bg-red-600');
+                    document.getElementById('btn-stop').classList.replace('text-gray-400', 'text-white');
+                    document.getElementById('btn-stop').classList.remove('cursor-not-allowed');
+                    document.getElementById('btn-stop').classList.add('hover:bg-red-500', 'shadow-lg');
+
+                    // ปิดการแก้ไข Input ตอนบอทรัน
+                    document.querySelectorAll('input').forEach(inp => inp.disabled = true);
+                } else {
+                    document.getElementById('btn-start').disabled = false;
+                    document.getElementById('btn-start').classList.replace('bg-gray-700', 'from-blue-600');
+                    document.getElementById('btn-start').classList.remove('cursor-not-allowed', 'text-gray-400');
+
+                    document.getElementById('btn-stop').disabled = true;
+                    document.getElementById('btn-stop').classList.replace('bg-red-600', 'bg-gray-700');
+                    document.getElementById('btn-stop').classList.replace('text-white', 'text-gray-400');
+                    document.getElementById('btn-stop').classList.add('cursor-not-allowed');
+                    document.getElementById('btn-stop').classList.remove('hover:bg-red-500', 'shadow-lg');
+
+                    // เปิดการแก้ไข Input
+                    document.querySelectorAll('input').forEach(inp => inp.disabled = false);
+                }
+            } catch (err) {
+                console.error("Error toggling bot", err);
+            }
+        }
+
+        // ฟังก์ชันดึงข้อมูลจาก Server ทุกๆ 1 วินาที
+        async function fetchStatus() {
+            try {
+                const res = await fetch('/api/status');
+                const data = await res.json();
+
+                // อัปเดตสถานะการเชื่อมต่อ
+                const connIndicator = document.getElementById('conn-indicator');
+                const connText = document.getElementById('conn-text');
+                if (data.connected) {
+                    connIndicator.classList.replace('bg-red-500', 'bg-green-500');
+                    connIndicator.classList.replace('shadow-[0_0_8px_rgba(239,68,68,0.8)]', 'shadow-[0_0_8px_rgba(34,197,94,0.8)]');
+                    connText.innerText = data.bot_running ? "บอทกำลังทำงาน (Connected)" : "เชื่อมต่อ MT5 สำเร็จ";
+                    connText.classList.replace('text-gray-400', 'text-green-400');
+                } else {
+                    connIndicator.classList.replace('bg-green-500', 'bg-red-500');
+                    connIndicator.classList.replace('shadow-[0_0_8px_rgba(34,197,94,0.8)]', 'shadow-[0_0_8px_rgba(239,68,68,0.8)]');
+                    connText.innerText = "ไม่ได้เชื่อมต่อ MT5";
+                    connText.classList.replace('text-green-400', 'text-gray-400');
+                }
+
+                // อัปเดตตัวเลขการเงิน
+                if (data.connected) {
+                    document.getElementById('stat-balance').innerText = data.balance.toFixed(2);
+                    document.getElementById('stat-equity').innerText = data.equity.toFixed(2);
+
+                    const profitEl = document.getElementById('stat-profit');
+                    const profitContainer = document.getElementById('stat-profit-container');
+                    profitEl.innerText = data.profit.toFixed(2);
+
+                    if (data.profit > 0) {
+                        profitContainer.className = "text-3xl font-bold text-green-400";
+                    } else if (data.profit < 0) {
+                        profitContainer.className = "text-3xl font-bold text-red-400";
+                    } else {
+                        profitContainer.className = "text-3xl font-bold text-white";
+                    }
+                }
+
+                // อัปเดตตาราง Positions
+                const tbody = document.getElementById('positions-body');
+                if (data.positions && data.positions.length > 0) {
+                    tbody.innerHTML = '';
+                    data.positions.forEach(pos => {
+                        const isBuy = pos.type === 'BUY';
+                        const typeClass = isBuy ? 'text-blue-400 bg-blue-400/10' : 'text-red-400 bg-red-400/10';
+                        const profitClass = pos.profit >= 0 ? 'text-green-400' : 'text-red-400';
+
+                        const tr = document.createElement('tr');
+                        tr.className = "hover:bg-gray-800/50 transition";
+                        tr.innerHTML = `
+                            <td class="p-2 text-gray-400">#${pos.ticket}</td>
+                            <td class="p-2 font-bold text-white">${pos.symbol}</td>
+                            <td class="p-2"><span class="px-1 py-0.5 rounded text-xs font-bold ${typeClass}">${pos.type}</span></td>
+                            <td class="p-2 text-gray-300">${pos.volume}</td>
+                            <td class="p-2 text-gray-300">${pos.price_open}</td>
+                            <td class="p-2 text-gray-400">${pos.price_current}</td>
+                            <td class="p-2 text-gray-400">${pos.sl}</td>
+                            <td class="p-2 text-gray-400">${pos.tp}</td>
+                            <td class="p-2 text-right font-bold ${profitClass}">${pos.profit > 0 ? '+' : ''}${pos.profit.toFixed(2)}</td>
+                        `;
+tbody.appendChild(tr);
+                    });
+                } else {
+                    tbody.innerHTML = '<tr><td colspan="9" class="p-3 text-center text-gray-500">ไม่มีออเดอร์ที่เปิดอยู่</td></tr>';
+                }
+                
+                // อัปเดต Checkboxes จาก Settings
+                if (data.settings) {
+                    document.getElementById('inp-use-ai').checked = data.settings.use_ai !== false;
+                    document.getElementById('inp-use-gpu').checked = data.settings.use_gpu_model === true;
+                    document.getElementById('inp-use-bb-ma-macd').checked = data.settings.use_bb_ma_macd === true;
+                    document.getElementById('inp-ai-model').value = data.settings.ai_model_path || 'ml_model.pkl';
+                }
+                
+                // อัปเดต Logs
+                const logContainer = document.getElementById('log-container');
+                if (data.logs && data.logs.length > 0) {
+                    logContainer.innerHTML = data.logs.map(log => {
+                        if(log.includes('✅')) return `<p class="text-green-400 mb-1">${log}</p>`;
+                        if(log.includes('❌') || log.includes('⚠️')) return `<p class="text-red-400 mb-1">${log}</p>`;
+                        return `<p class="text-gray-300 mb-1">${log}</p>`;
+                    }).join('');
+                }
+
+            } catch (err) {
+                console.error("Failed to fetch status", err);
+            }
+        }
+
+        // เริ่มโหลดข้อมูลทุกๆ 1 วินาที
+        setInterval(fetchStatus, 1000);
+        fetchStatus(); // เรียกครั้งแรกทันที
+    </script>
+</body>
+</html>
