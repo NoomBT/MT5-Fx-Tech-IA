@@ -46,6 +46,6 @@ python ml_model.py  # Train ML model
 
 ## Quick Commands
 ```bash
-del ml_model.pkl  # Delete old model before retraining
+del ml_model-XAUUSDm.pkl  # Delete old model before retraining
 python ml_model.py
 ```

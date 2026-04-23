@@ -42,7 +42,7 @@ bot_status = {
     "close_loss": 20,
     "use_ai": True,
     "use_bb_ma_macd": False,  # ใช้ BB+MA+MACD Strategy
-    "ai_model_path": "ml_model.pkl",
+    "ai_model_path": "ml_model-XAUUSDm.pkl",
     "use_gpu_model": False,     # ใช้ GPU Model (ml_model_gpu.pkl)
     "timeframe": mt5.TIMEFRAME_H1,
     "use_trend_filter": True,
@@ -148,7 +148,7 @@ def load_ml_model():
         model_module = "ml_model_gpu"
         model_type = "GPU"
     else:
-        model_path = bot_status.get("ai_model_path", "ml_model.pkl")
+        model_path = bot_status.get("ai_model_path", "ml_model-XAUUSDm.pkl")
         model_module = "ml_model"
         model_type = "CPU"
     
@@ -650,9 +650,9 @@ def get_bb_ma_macd_signal(symbol, timeframe=None):
     sell_condition = (ma_was_above_bb and ma_below_bb) and (macd_above_hist or macd_curr > macd_hist_prev)
     
     if buy_condition:
-        return "BULLISH", f"MA>{BB}>BB_mid, MACD<Hist"
+        return "BULLISH", "MA>BB_mid, MACD<Hist"
     elif sell_condition:
-        return "BEARISH", f"MA<BB_mid, MACD>Hist"
+        return "BEARISH", "MA<BB_mid, MACD>Hist"
     
     return "NEUTRAL", f"MA:{ma_curr:.5f} BB:{bb_mid_curr:.5f}"
 
@@ -1204,7 +1204,7 @@ def get_status():
             "use_ai": bot_status.get("use_ai", False),
             "use_gpu_model": bot_status.get("use_gpu_model", False),
             "use_bb_ma_macd": bot_status.get("use_bb_ma_macd", False),
-            "ai_model_path": bot_status.get("ai_model_path", "ml_model.pkl")
+            "ai_model_path": bot_status.get("ai_model_path", "ml_model-XAUUSDm.pkl")
         }
     })
 
@@ -1248,7 +1248,7 @@ def control_bot():
             bot_status["close_loss"] = float(data.get('close_loss', bot_status.get("close_loss", 20)))
             bot_status["use_ai"] = data.get('use_ai', bot_status.get("use_ai", True))
             bot_status["use_bb_ma_macd"] = data.get('use_bb_ma_macd', bot_status.get("use_bb_ma_macd", False))
-            bot_status["ai_model_path"] = data.get('ai_model_path', bot_status.get("ai_model_path", 'ml_model.pkl'))
+            bot_status["ai_model_path"] = data.get('ai_model_path', bot_status.get("ai_model_path", 'ml_model-XAUUSDm.pkl'))
             bot_status["use_gpu_model"] = data.get('use_gpu_model', bot_status.get("use_gpu_model", False))
             
             tf_str = data.get('timeframe', bot_status.get("timeframe_str", 'M15'))

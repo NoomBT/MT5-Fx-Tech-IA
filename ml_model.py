@@ -471,13 +471,13 @@ class MLTradingModel:
         
         print(f"\n📋 Classification Report:")
         print(classification_report(y_test, y_pred_test, target_names=['Sell (-1)', 'Neutral (0)', 'Buy (1)']))
-        
+        file_name, file_extension = os.path.splitext(self.model_path)
         joblib.dump({
             'model': self.model,
             'scaler': self.scaler,
             'feature_names': self.feature_names,
             'prob_threshold': self.prob_threshold
-        }, self.model_path)
+        }, f"models/{file_name}-{symbol}{file_extension}")
         self.is_trained = True
         
         return True
@@ -719,23 +719,24 @@ if __name__ == '__main__':
         print("❌ ไม่สามารถเชื่อมต่อ MT5 ได้")
         exit()
     
-    symbol = "XAUUSDm"
-    ml = MLTradingModel()
-    
-    print("="*60)
-    print(f"📊 กำลังฝึกโมเดลสำหรับ {symbol}")
-    print("="*60)
-    
-    ml.train(symbol, mt5.TIMEFRAME_H1, num_bars=30000)
-    
-    print("\n📈 Feature Importance:")
-    ml.get_feature_importance()
-    
-    print("\n🔮 ทดสอบการทำนาย:")
-    signal = ml.predict(symbol, mt5.TIMEFRAME_H1)
-    print(f"   Signal: {signal}")
-    
-    print("\n🎮 Running Simulation...")
-    ml.simulate(symbol, mt5.TIMEFRAME_H1, num_bars=2000)
+    symbols = ["XAUUSDm","BTCUSDm"]
+    for symbol in symbols:
+        ml = MLTradingModel()
+
+        print("="*60)
+        print(f"📊 กำลังฝึกโมเดลสำหรับ {symbol}")
+        print("="*60)
+
+        ml.train(symbol, mt5.TIMEFRAME_H1, num_bars=30000)
+
+        print("\n📈 Feature Importance:")
+        ml.get_feature_importance()
+
+        print("\n🔮 ทดสอบการทำนาย:")
+        signal = ml.predict(symbol, mt5.TIMEFRAME_H1)
+        print(f"   Signal: {signal}")
+
+        print("\n🎮 Running Simulation...")
+        ml.simulate(symbol, mt5.TIMEFRAME_H1, num_bars=2000)
     
     mt5.shutdown()
