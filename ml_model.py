@@ -27,7 +27,7 @@ class MLTradingModel:
         # 3-Class Classification: 1=Buy, 0=Neutral, -1=Sell
         self.forward_window = 5
         self.threshold = 0.002
-        self.prob_threshold = 0.25  # ลดลงเพื่อให้ predict Buy/Sell บ่อยขึ้น
+        self.prob_threshold = 0.28  # ลดลงเพื่อให้ predict Buy/Sell บ่อยขึ้น
 
     def create_features(self, df):
         """สร้าง Features เชิงลึก (EMA/MACD/RSI Strategy: Fast=12, Slow=26)"""
@@ -239,8 +239,8 @@ class MLTradingModel:
         base_model = GradientBoostingClassifier(random_state=42)
         
         # ใช้ class weights เพื่อให้ model predict Buy/Sell มากขึ้น
-        # ปรับ weight เป็น {-1: 2.5, 0: 1, 1: 2.5}
-        class_weights = {-1: 2.5, 0: 1, 1: 2.5}
+        # ปรับ weight เป็น {-1: 2.0, 0: 1, 1: 2.0}
+        class_weights = {-1: 2.0, 0: 1, 1: 2.0}
         from sklearn.utils.class_weight import compute_sample_weight
         sample_weights = compute_sample_weight(class_weights, y_train)
         
