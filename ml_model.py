@@ -261,7 +261,7 @@ class MLTradingModel:
         print(f"   Best CV F1-Macro: {random_search.best_score_:.2%}")
         
         self.model = random_search.best_estimator_
-        self.model.fit(X_train, y_train)
+        self.model.fit(X_train, y_train, sample_weight=sample_weights)
         
         # 3-Class: ใช้ predict โดยตรง
         y_pred = self.model.predict(X_train)
@@ -287,7 +287,8 @@ class MLTradingModel:
         joblib.dump({
             'model': self.model,
             'scaler': self.scaler,
-            'feature_names': self.feature_names
+            'feature_names': self.feature_names,
+            'prob_threshold': self.prob_threshold
         }, self.model_path)
         self.is_trained = True
         
