@@ -148,7 +148,7 @@ def load_ml_model():
         model_module = "ml_model_gpu"
         model_type = "GPU"
     else:
-        model_path = bot_status.get("ai_model_path", "ml_model-XAUUSDm.pkl")
+        model_path = bot_status.get("ai_model_path", "ml_model.pkl")
         model_module = "ml_model"
         model_type = "CPU"
     
@@ -349,9 +349,10 @@ def get_ai_signal(symbol, timeframe=None):
     try:
         model = ml_model.get('model') if isinstance(ml_model, dict) else ml_model
         scaler = ml_model.get('scaler') if isinstance(ml_model, dict) else None
-        feature_names = ml_model.get('feature_names') if isinstance(ml_model, dict) else None
-        label_encoder = ml_model.get('label_encoder') if isinstance(ml_model, dict) else None
-        prob_threshold = ml_model.get('prob_threshold', 0.30) if isinstance(ml_model, dict) else 0.30
+        feature_names = ml_model.get('feature_names') if isinstance(ml_model, dict) and ml_model.get('feature_names') else [
+            'slope_20', 'adx', 'sqz_idx', 'atr_ratio', 'rsi_14', 'mfi', 'macd_hist',
+            'price_in_bb', 'dist_sma_200', 'dist_sma_20', 'natr', 'body_size', 'upper_wick', 'hour', 'market_active'
+        ]
         
         rates = mt5.copy_rates_from_pos(symbol, timeframe, 0, 60)
         if rates is None or len(rates) < 50:
@@ -359,15 +360,32 @@ def get_ai_signal(symbol, timeframe=None):
         
         df = pd.DataFrame(rates)
         
-        from ml_model_gpu import MLTradingModel
+        from ml_model import MLTradingModel
         ml = MLTradingModel()
         ml.model = model
         ml.scaler = scaler
         ml.feature_names = feature_names
-        ml.label_encoder = label_encoder
-        ml.prob_threshold = prob_threshold
         
-        signal = ml.predict(symbol, timeframe)
+        features_df = ml.create_features(df)
+        
+        # Get only the last row (current prediction)
+        X = features_df[feature_names].values[-1:]
+        if X.shape[1] == 0:
+            return "NEUTRAL"
+        
+        X_scaled = scaler.transform(X)
+        
+        prediction = model.predict(X_scaled)[0]
+        
+        if prediction == 1:
+            return "BULLISH"
+        elif prediction == -1:
+            return "BEARISH"
+        else:
+            return "NEUTRAL"
+    except Exception as e:
+        add_log(f"⚠️ AI Signal Error: {e}")
+        return "NEUTRAL"
         return signal
     except Exception as e:
         add_log(f"⚠️ AI Signal Error: {e}")
