@@ -18,8 +18,8 @@ MODEL_PATH = "models/ml_model_XAU.pkl"
 # Risk Management
 LOT_SIZE = 0.01
 CONFIDENCE_LEVEL = 0.35
-STOP_LOSS_ATR = 2.0  # SL เป็น 2 เท่าของ ATR เพื่อลดการโดนสะบัด
-TAKE_PROFIT_ATR = 2.0  # TP เป็น 4 เท่าของ ATR (RR 1:2)
+STOP_LOSS_ATR = 1.0  # SL เป็น 2 เท่าของ ATR เพื่อลดการโดนสะบัด
+TAKE_PROFIT_ATR = 1.0  # TP เป็น 4 เท่าของ ATR (RR 1:2)
 USE_TRAILING = True  # เปิดใช้ Trailing Stop เพื่อล็อคกำไรแทนการปิดมั่ว
 TRAILING_STEP_ATR = 1.0  # เลื่อน SL เมื่อกำไรไปแล้ว 1 เท่าของ ATR
 
